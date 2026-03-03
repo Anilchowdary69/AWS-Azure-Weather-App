@@ -24,7 +24,13 @@ terraform {
 provider "aws" {
   region = var.aws_region
 }
-
+# i need a separate AWS provider alias for us-east-1
+# ACM certificates used with CloudFront must always be in us-east-1
+# even if my other resources are in a different region
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
 # Azure provider configuration
 provider "azurerm" {
   features {}

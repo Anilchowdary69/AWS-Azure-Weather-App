@@ -96,6 +96,7 @@ resource "aws_s3_object" "appjs" {
 # without this my app only loads from one region which is slow for users far away
 resource "aws_cloudfront_distribution" "weather_app" {
   enabled             = true
+  aliases             = ["www.${var.domain_name}"]
   default_root_object = "index.html"
   comment             = var.cloudfront_comment
 
@@ -145,10 +146,13 @@ resource "aws_cloudfront_distribution" "weather_app" {
     }
   }
 
-  # using cloudfront free default ssl certificate
-  # this gives me https without buying a certificate
+ # i am using my own SSL certificate instead of the default CloudFront one
+  # this allows HTTPS to work with my custom domain www.anil-weatherapp.online
+  # sni-only is the modern standard and works with all browsers built after 2010
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate_validation.weather_app.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   tags = {
@@ -226,6 +230,55 @@ resource "azurerm_storage_blob" "appjs" {
   type                   = "Block"
   source                 = "../app/app.js"
   content_type           = "application/javascript"
+}
+
+# -------------------------------------------------------
+# ACM CERTIFICATE SECTION - SSL for custom domain
+# -------------------------------------------------------
+
+# i am requesting a free SSL certificate for my custom domain
+# this is required for HTTPS to work with CloudFront on a custom domain
+# without this visitors get a security warning in their browser
+resource "aws_acm_certificate" "weather_app" {
+  provider                  = aws.us_east_1
+  domain_name               = var.domain_name
+  subject_alternative_names = ["www.${var.domain_name}"]
+  validation_method         = "DNS"
+
+  tags = {
+    Project = "weather-app"
+  }
+
+  # create new certificate before destroying old one
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# i am automatically creating DNS validation records in Route 53
+# this proves to AWS that i own the domain without any manual steps
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.weather_app.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  zone_id = aws_route53_zone.weather_app.zone_id
+  name    = each.value.name
+  type    = each.value.type
+  ttl     = 60
+  records = [each.value.record]
+}
+
+# i am telling Terraform to wait until the certificate is fully validated
+# before using it in CloudFront - otherwise deployment will fail
+resource "aws_acm_certificate_validation" "weather_app" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.weather_app.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
 # -------------------------------------------------------
