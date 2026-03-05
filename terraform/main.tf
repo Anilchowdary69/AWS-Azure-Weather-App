@@ -337,8 +337,8 @@ resource "aws_route53_record" "secondary" {
     type = "SECONDARY"
   }
 
- # pointing directly to Azure Blob Storage website endpoint
-records = [azurerm_storage_account.weather_app.primary_web_host]
+  # pointing directly to Azure Blob Storage website endpoint
+  records = [azurerm_storage_account.weather_app.primary_web_host]
 }
 
 # www points to app subdomain
