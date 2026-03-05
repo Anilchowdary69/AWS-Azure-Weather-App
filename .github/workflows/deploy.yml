@@ -3,9 +3,9 @@ name: Deploy Weather App to AWS and Azure
 # i want this pipeline to run automatically on every push to main
 # and also have a manual trigger button in GitHub Actions
 on:
-  push:
-    branches:
-      - main
+  #push:
+    #branches:
+     # - main
   workflow_dispatch:
 
 env:

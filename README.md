@@ -28,23 +28,8 @@ A fully functional weather app that fetches real-time weather data for any city 
 
 ## Architecture
 
-```
-User visits www.anil-weatherapp.online
-        |
-        v
-Route 53 DNS (anil-weatherapp.online)
-        |
-        |-- Health Check passes --> CloudFront CDN --> S3 Bucket (AWS)
-        |                               |
-        |                               v
-        |                         Weather App served from AWS
-        |                         Footer: "Currently served from AWS S3"
-        |
-        |-- Health Check fails 3x --> Azure Blob Storage (Azure)
-                                          |
-                                          v
-                                    Weather App served from Azure
-                                    Footer: "Currently served from Azure Blob Storage"
+![Architecture Diagram](architecture-diagram.png)
+
 ```
 
 ---
@@ -149,28 +134,7 @@ All credentials stored as encrypted GitHub Secrets. Never hardcoded in code. `te
 State stored in S3 backend so the pipeline always knows what exists in both clouds:
 
 ```
-s3://stock-market-terraform-state-33454/weatherapp/terraform.tfstate
-```
-
----
-
-## Project Structure
-
-```
-aws-azure-weather-app/
-├── .github/
-│   └── workflows/
-│       └── deploy.yml          # CI/CD pipeline for both clouds
-├── app/
-│   ├── index.html              # Weather app structure
-│   ├── style.css               # Dark theme glassmorphism design
-│   └── app.js                  # OpenWeatherMap API integration
-├── terraform/
-│   ├── main.tf                 # All AWS and Azure resources
-│   ├── variables.tf            # Configurable variables
-│   ├── outputs.tf              # Post-deployment outputs
-│   └── providers.tf            # AWS and Azure providers with S3 backend
-└── README.md
+s3://stock-market-terraform-state-6969/weatherapp/terraform.tfstate
 ```
 
 ---
